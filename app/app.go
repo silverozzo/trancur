@@ -5,6 +5,7 @@ import (
 
 	"trancur/config"
 	"trancur/domain/service"
+	"trancur/heartbeat"
 	"trancur/helper"
 	"trancur/http"
 	"trancur/log"
@@ -20,6 +21,11 @@ func Run(ctx context.Context) {
 
 	crSrv := service.NewCourse()
 
+	//	запускаем обновление от ЦБ РФ
+	hb := heartbeat.NewRus(infoLog, errLog)
+	go hb.StartBeat(ctx)
+
+	//	запускаем http сервер
 	rtr := http.NewRouter(crSrv)
 	httpSrv := http.NewServer(rtr, cfg, infoLog, errLog)
 	go httpSrv.Run()
