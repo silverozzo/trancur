@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -29,6 +30,16 @@ func (cfg *Config) GetSelfHttpPort() string {
 
 func (cfg *Config) GetDefaultCourseSource() string {
 	return cfg.loadField("DEFAULT_COURSE_SOURCE")
+}
+
+func (cfg *Config) GetHeartbeatDuration() time.Duration {
+	str := cfg.loadField("HEARTBEAT_DURATION")
+	dur, err := time.ParseDuration(str)
+	if err != nil {
+		cfg.errLog.Fatalln("не распознано значение:", str, "по полю HEARTBEAT_DURATION")
+	}
+
+	return dur
 }
 
 func (cfg *Config) loadField(fld string) string {

@@ -1,6 +1,11 @@
 package http
 
+import (
+	"trancur/http/controller"
+)
+
 type Config interface {
-	GetDefaultCourseSource() string
+	controller.Config
+
 	GetSelfHttpPort() string
 }

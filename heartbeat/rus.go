@@ -18,11 +18,12 @@ import (
 
 const (
 	rusMainCurrency = "RUB"
-	sourceName      = "RUS"
+	sourceName      = model.RusSource
 )
 
 type RusHearbeat struct {
 	srv     CourseService
+	cfg     Config
 	infoLog *log.Logger
 	errLog  *log.Logger
 }
@@ -42,9 +43,10 @@ type responseValute struct {
 
 var buff [1024 * 1024]byte
 
-func NewRusHeartbeat(srv CourseService, infoLog, errLog *log.Logger) *RusHearbeat {
+func NewRusHeartbeat(srv CourseService, cfg Config, infoLog, errLog *log.Logger) *RusHearbeat {
 	hb := &RusHearbeat{
 		srv:     srv,
+		cfg:     cfg,
 		infoLog: infoLog,
 		errLog:  errLog,
 	}
@@ -57,7 +59,7 @@ func (hb *RusHearbeat) StartBeat(ctx context.Context) {
 
 	hb.tick()
 
-	tcr := time.NewTicker(time.Hour * 24)
+	tcr := time.NewTicker(hb.cfg.GetHeartbeatDuration())
 
 	for {
 		select {

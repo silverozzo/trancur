@@ -15,12 +15,13 @@ import (
 
 const (
 	thMainCurrency = "THB"
-	thSourceName   = "TH"
+	thSourceName   = model.ThSource
 	thTitleSuffix  = "Selling Rate"
 )
 
 type ThHeartbeat struct {
 	srv     CourseService
+	cfg     Config
 	infoLog *log.Logger
 	errLog  *log.Logger
 }
@@ -39,9 +40,10 @@ type responseThItem struct {
 	Date           string   `xml:"date"`
 }
 
-func NewThHeartbeat(srv CourseService, infoLog, errLog *log.Logger) *ThHeartbeat {
+func NewThHeartbeat(srv CourseService, cfg Config, infoLog, errLog *log.Logger) *ThHeartbeat {
 	hb := &ThHeartbeat{
 		srv:     srv,
+		cfg:     cfg,
 		infoLog: infoLog,
 		errLog:  errLog,
 	}
@@ -54,7 +56,7 @@ func (hb *ThHeartbeat) StartBeat(ctx context.Context) {
 
 	hb.tick()
 
-	tcr := time.NewTicker(time.Hour * 24)
+	tcr := time.NewTicker(hb.cfg.GetHeartbeatDuration())
 
 	for {
 		select {

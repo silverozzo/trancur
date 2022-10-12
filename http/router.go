@@ -2,15 +2,16 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"trancur/http/controller"
 )
 
-func NewRouter(srv CourseService, cfg Config) *gin.Engine {
-	ctrl := NewController(srv, cfg)
+func NewRouter(srv controller.CourseService, cfg Config) *gin.Engine {
+	crCtrl := controller.NewCourse(srv, cfg)
 
 	rtr := gin.Default()
-	rtr.GET("/ping", ctrl.Ping)
-	rtr.GET("/courses", ctrl.GetAllCursBySource)
-	rtr.GET("/courses/:source", ctrl.GetAllCursBySource)
+	rtr.GET("/courses", crCtrl.GetAllCursBySource)
+	rtr.GET("/courses/:source", crCtrl.GetAllCursBySource)
 
 	return rtr
 }

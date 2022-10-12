@@ -1,7 +1,6 @@
-package http
+package controller
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
@@ -19,13 +18,13 @@ type CourseService interface {
 	GetCourseListBySource(string) (*model.ExchangeList, error)
 }
 
-type Controller struct {
+type Course struct {
 	srv CourseService
 	cfg Config
 }
 
-func NewController(srv CourseService, cfg Config) *Controller {
-	ctrl := &Controller{
+func NewCourse(srv CourseService, cfg Config) *Course {
+	ctrl := &Course{
 		srv: srv,
 		cfg: cfg,
 	}
@@ -33,19 +32,14 @@ func NewController(srv CourseService, cfg Config) *Controller {
 	return ctrl
 }
 
-func (ctrl *Controller) Ping(gctx *gin.Context) {
-	gctx.JSON(http.StatusOK, gin.H{"message": "pong"})
-}
-
-func (ctrl *Controller) GetAllCursBySource(gctx *gin.Context) {
+func (ctrl *Course) GetAllCursBySource(gctx *gin.Context) {
 	source := gctx.Param("source")
 	if len(source) == 0 {
 		source = ctrl.cfg.GetDefaultCourseSource()
 	}
 	source = strings.ToUpper(source)
 
-	data, err := ctrl.srv.GetCourseListBySource(source)
-	if errors.Is(err, model.ErrNotFound) {
+	if _, ok := model.SourceMap[source]; !ok {
 		gctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"error": msgNotFound,
 		})
@@ -53,6 +47,7 @@ func (ctrl *Controller) GetAllCursBySource(gctx *gin.Context) {
 		return
 	}
 
+	data, err := ctrl.srv.GetCourseListBySource(source)
 	if err != nil {
 		gctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": msgInternal,
