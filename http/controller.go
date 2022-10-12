@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -20,11 +21,13 @@ type CourseService interface {
 
 type Controller struct {
 	srv CourseService
+	cfg Config
 }
 
-func NewController(srv CourseService) *Controller {
+func NewController(srv CourseService, cfg Config) *Controller {
 	ctrl := &Controller{
 		srv: srv,
+		cfg: cfg,
 	}
 
 	return ctrl
@@ -35,7 +38,13 @@ func (ctrl *Controller) Ping(gctx *gin.Context) {
 }
 
 func (ctrl *Controller) GetAllCursBySource(gctx *gin.Context) {
-	data, err := ctrl.srv.GetCourseListBySource("RUS")
+	source := gctx.Param("source")
+	if len(source) == 0 {
+		source = ctrl.cfg.GetDefaultCourseSource()
+	}
+	source = strings.ToUpper(source)
+
+	data, err := ctrl.srv.GetCourseListBySource(source)
 	if errors.Is(err, model.ErrNotFound) {
 		gctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"error": msgNotFound,

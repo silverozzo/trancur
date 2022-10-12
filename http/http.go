@@ -9,10 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Config interface {
-	GetSelfHttpPort() string
-}
-
 type Server struct {
 	srv     *http.Server
 	infoLog *log.Logger

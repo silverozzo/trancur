@@ -22,11 +22,14 @@ func Run(ctx context.Context) {
 	crSrv := service.NewCourse()
 
 	//	запускаем обновление от ЦБ РФ
-	hb := heartbeat.NewRus(crSrv, infoLog, errLog)
-	go hb.StartBeat(ctx)
+	rusHb := heartbeat.NewRusHeartbeat(crSrv, infoLog, errLog)
+	go rusHb.StartBeat(ctx)
+
+	thHb := heartbeat.NewThHeartbeat(crSrv, infoLog, errLog)
+	go thHb.StartBeat(ctx)
 
 	//	запускаем http сервер
-	rtr := http.NewRouter(crSrv)
+	rtr := http.NewRouter(crSrv, cfg)
 	httpSrv := http.NewServer(rtr, cfg, infoLog, errLog)
 	go httpSrv.Run()
 	defer httpSrv.Shutdown(ctx)

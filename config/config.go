@@ -27,6 +27,10 @@ func (cfg *Config) GetSelfHttpPort() string {
 	return cfg.loadField("SELF_HTTP_PORT")
 }
 
+func (cfg *Config) GetDefaultCourseSource() string {
+	return cfg.loadField("DEFAULT_COURSE_SOURCE")
+}
+
 func (cfg *Config) loadField(fld string) string {
 	val, ok := os.LookupEnv(fld)
 	if !ok {

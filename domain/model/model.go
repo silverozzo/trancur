@@ -4,10 +4,6 @@ import (
 	"time"
 )
 
-type Currency string
-
-type Rate float64
-
 type Exchange struct {
 	First  string
 	Second string

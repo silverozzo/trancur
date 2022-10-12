@@ -17,36 +17,33 @@ import (
 )
 
 const (
-	mainCurrency = "RUB"
-	sourceName   = "RUS"
+	rusMainCurrency = "RUB"
+	sourceName      = "RUS"
 )
 
-type CourseService interface {
-	SaveCourseListBySource(string, *model.ExchangeList) error
-}
-
-type Rus struct {
+type RusHearbeat struct {
 	srv     CourseService
 	infoLog *log.Logger
 	errLog  *log.Logger
 }
 
-type ResponseValCurs struct {
+type responseValCurs struct {
 	XMLName xml.Name         `xml:"ValCurs"`
-	Valutes []ResponseValute `xml:"Valute"`
+	Valutes []responseValute `xml:"Valute"`
+	Date    string           `xml:"Date,attr"`
 }
 
-type ResponseValute struct {
+type responseValute struct {
 	XMLName  xml.Name `xml:"Valute"`
 	CharCode string   `xml:"CharCode"`
-	Nominal  int      `xml:"Nominal"`
+	Nominal  float64  `xml:"Nominal"`
 	Value    string   `xml:"Value"`
 }
 
 var buff [1024 * 1024]byte
 
-func NewRus(srv CourseService, infoLog, errLog *log.Logger) *Rus {
-	hb := &Rus{
+func NewRusHeartbeat(srv CourseService, infoLog, errLog *log.Logger) *RusHearbeat {
+	hb := &RusHearbeat{
 		srv:     srv,
 		infoLog: infoLog,
 		errLog:  errLog,
@@ -55,7 +52,7 @@ func NewRus(srv CourseService, infoLog, errLog *log.Logger) *Rus {
 	return hb
 }
 
-func (hb *Rus) StartBeat(ctx context.Context) {
+func (hb *RusHearbeat) StartBeat(ctx context.Context) {
 	hb.infoLog.Println("запускем сердцебиение по ЦБ РФ")
 
 	hb.tick()
@@ -75,8 +72,8 @@ func (hb *Rus) StartBeat(ctx context.Context) {
 	}
 }
 
-func (hb *Rus) tick() {
-	hb.infoLog.Println("тик")
+func (hb *RusHearbeat) tick() {
+	hb.infoLog.Println("тик по ЦБ РФ")
 
 	rsp, err := http.Get("http://www.cbr.ru/scripts/XML_daily.asp")
 	defer rsp.Body.Close()
@@ -87,10 +84,10 @@ func (hb *Rus) tick() {
 		return
 	}
 
-	var res ResponseValCurs
+	var res responseValCurs
 
 	d := xml.NewDecoder(rsp.Body)
-	d.CharsetReader = charset
+	d.CharsetReader = winCharset
 	err = d.Decode(&res)
 	if err != nil {
 		hb.errLog.Println("не смогли распарсить xml от ЦБ РФ:", err)
@@ -112,20 +109,42 @@ func (hb *Rus) tick() {
 		}
 
 		data.Exchanges[i] = model.Exchange{
-			First:  mainCurrency,
+			First:  rusMainCurrency,
 			Second: v.CharCode,
-			Rate:   rateFl,
+			Rate:   rateFl / v.Nominal,
 		}
+	}
+	data.Updated, err = shitDateParse(res.Date)
+	if err != nil {
+		hb.errLog.Println("не смогли распарсить строку:", res.Date, err)
+
+		return
 	}
 
 	hb.srv.SaveCourseListBySource(sourceName, &data)
 }
 
-func charset(chh string, input io.Reader) (io.Reader, error) {
+func winCharset(chh string, input io.Reader) (io.Reader, error) {
 	switch chh {
 	case "windows-1251":
 		return charmap.Windows1251.NewDecoder().Reader(input), nil
 	default:
 		return nil, errors.New("unknown charset:" + chh)
 	}
+}
+
+func shitDateParse(input string) (time.Time, error) {
+	dateSl := strings.SplitN(input, ".", 3)
+
+	if len(dateSl) != 3 {
+		return time.Time{}, errors.New("not enough parts in date")
+	}
+
+	//	todo проблема с указанием часового пояса
+	date, err := time.Parse("2006-01-02", dateSl[2]+"-"+dateSl[1]+"-"+dateSl[0])
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return date, nil
 }
