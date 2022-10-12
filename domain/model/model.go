@@ -9,9 +9,9 @@ type Currency string
 type Rate float64
 
 type Exchange struct {
-	First  Currency
-	Second Currency
-	Rate   Rate
+	First  string
+	Second string
+	Rate   float64
 }
 
 type ExchangeList struct {

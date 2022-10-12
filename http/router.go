@@ -2,11 +2,9 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-
-	"trancur/domain/service"
 )
 
-func NewRouter(srv *service.Course) *gin.Engine {
+func NewRouter(srv CourseService) *gin.Engine {
 	ctrl := NewController(srv)
 
 	rtr := gin.Default()

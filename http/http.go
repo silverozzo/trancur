@@ -7,9 +7,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
-	"trancur/config"
 )
+
+type Config interface {
+	GetSelfHttpPort() string
+}
 
 type Server struct {
 	srv     *http.Server
@@ -17,7 +19,7 @@ type Server struct {
 	errLog  *log.Logger
 }
 
-func NewServer(rtr *gin.Engine, cfg *config.Config, infoLog, errLog *log.Logger) *Server {
+func NewServer(rtr *gin.Engine, cfg Config, infoLog, errLog *log.Logger) *Server {
 	srv := &http.Server{
 		Addr:    cfg.GetSelfHttpPort(),
 		Handler: rtr,
@@ -36,14 +38,14 @@ func (srv *Server) Run() {
 	srv.infoLog.Println("поднимаем http сервер")
 
 	if err := srv.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		srv.errLog.Println("еггог:", err)
+		srv.errLog.Println("ошибка работы сервера:", err)
 	}
 }
 
 func (srv *Server) Shutdown(ctx context.Context) {
 	srv.infoLog.Println("опускаем http сервер")
 
-	if err := srv.srv.Shutdown(ctx); err != nil {
-		srv.errLog.Println("еггог:", err)
+	if err := srv.srv.Shutdown(ctx); err != nil && !errors.Is(err, context.Canceled) {
+		srv.errLog.Println("ошибка выключения сервера:", err)
 	}
 }

@@ -22,7 +22,7 @@ func Run(ctx context.Context) {
 	crSrv := service.NewCourse()
 
 	//	запускаем обновление от ЦБ РФ
-	hb := heartbeat.NewRus(infoLog, errLog)
+	hb := heartbeat.NewRus(crSrv, infoLog, errLog)
 	go hb.StartBeat(ctx)
 
 	//	запускаем http сервер

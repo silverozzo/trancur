@@ -7,12 +7,26 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/text/encoding/charmap"
+
+	"trancur/domain/model"
 )
 
+const (
+	mainCurrency = "RUB"
+	sourceName   = "RUS"
+)
+
+type CourseService interface {
+	SaveCourseListBySource(string, *model.ExchangeList) error
+}
+
 type Rus struct {
+	srv     CourseService
 	infoLog *log.Logger
 	errLog  *log.Logger
 }
@@ -31,8 +45,9 @@ type ResponseValute struct {
 
 var buff [1024 * 1024]byte
 
-func NewRus(infoLog, errLog *log.Logger) *Rus {
+func NewRus(srv CourseService, infoLog, errLog *log.Logger) *Rus {
 	hb := &Rus{
+		srv:     srv,
 		infoLog: infoLog,
 		errLog:  errLog,
 	}
@@ -72,8 +87,6 @@ func (hb *Rus) tick() {
 		return
 	}
 
-	hb.infoLog.Println("получили от ЦБ РФ")
-
 	var res ResponseValCurs
 
 	d := xml.NewDecoder(rsp.Body)
@@ -86,6 +99,26 @@ func (hb *Rus) tick() {
 	}
 
 	hb.infoLog.Println("от ЦБ РФ курсы:", len(res.Valutes))
+
+	var data model.ExchangeList
+
+	data.Exchanges = make([]model.Exchange, len(res.Valutes))
+	for i, v := range res.Valutes {
+		rateFl, err := strconv.ParseFloat(strings.Replace(v.Value, ",", ".", 1), 64)
+		if err != nil {
+			hb.errLog.Println("не смогли распарсить строку:", v.Value)
+
+			continue
+		}
+
+		data.Exchanges[i] = model.Exchange{
+			First:  mainCurrency,
+			Second: v.CharCode,
+			Rate:   rateFl,
+		}
+	}
+
+	hb.srv.SaveCourseListBySource(sourceName, &data)
 }
 
 func charset(chh string, input io.Reader) (io.Reader, error) {

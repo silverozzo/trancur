@@ -1,4 +1,3 @@
-// signal
 package helper
 
 import (
