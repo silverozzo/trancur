@@ -2,9 +2,13 @@
 
 GET /courses/:source
 
-Получение курсов из указанного в source источника. Пока только два: "rus" и "th"
+Получение курсов из указанного в source источника. Пока только два: `rus` и `th`
+
+Пример запроса:
+`http://localhost:8080/courses/rus`
 
 Пример ответа:
+```
 {
     "data": {
         "exchanges": [
@@ -23,3 +27,4 @@ GET /courses/:source
     },
     "error": null
 }
+```
