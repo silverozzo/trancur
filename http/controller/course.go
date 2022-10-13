@@ -9,15 +9,6 @@ import (
 	"trancur/domain/model"
 )
 
-var (
-	msgNotFound = "не найден указанный источник"
-	msgInternal = "зайдите попозже"
-)
-
-type CourseService interface {
-	GetCourseListBySource(string) (*model.ExchangeList, error)
-}
-
 type Course struct {
 	srv CourseService
 	cfg Config

@@ -29,7 +29,7 @@ func Run(ctx context.Context) {
 	go thHb.StartBeat(ctx)
 
 	//	запускаем http сервер
-	rtr := http.NewRouter(crSrv, cfg)
+	rtr := http.NewRouter(crSrv, cfg, infoLog)
 	httpSrv := http.NewServer(rtr, cfg, infoLog, errLog)
 	go httpSrv.Run()
 	defer httpSrv.Shutdown(ctx)
